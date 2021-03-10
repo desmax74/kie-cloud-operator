@@ -1115,6 +1115,11 @@ func (in *KieServerSet) DeepCopyInto(out *KieServerSet) {
 		*out = new(JvmObject)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.JbpmCluster != nil {
+		in, out := &in.JbpmCluster, &out.JbpmCluster
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
@@ -1354,6 +1359,11 @@ func (in *ServerTemplate) DeepCopyInto(out *ServerTemplate) {
 	in.Jms.DeepCopyInto(&out.Jms)
 	in.SmartRouter.DeepCopyInto(&out.SmartRouter)
 	in.Jvm.DeepCopyInto(&out.Jvm)
+	if in.JbpmCluster != nil {
+		in, out := &in.JbpmCluster, &out.JbpmCluster
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

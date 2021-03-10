@@ -659,6 +659,9 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 		if serverSet.Deployments == nil {
 			serverSet.Deployments = Pint(constants.DefaultKieDeployments)
 		}
+		if serverSet.JbpmCluster == nil {
+			serverSet.JbpmCluster = Pbool(false)
+		}
 		for i := 0; i < *serverSet.Deployments; i++ {
 			name := getKieDeploymentName(cr.Status.Applied.CommonConfig.ApplicationName, serverSet.Name, 0, i)
 			if usedNames[name] {
@@ -671,6 +674,7 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 				Build:            getBuildConfig(product, cr, serverSet),
 				KeystoreSecret:   serverSet.KeystoreSecret,
 				StorageClassName: serverSet.StorageClassName,
+				JbpmCluster:      serverSet.JbpmCluster,
 			}
 
 			if cr.Status.Applied.Objects.Console == nil || cr.Status.Applied.Environment == api.RhdmProductionImmutable {
@@ -695,6 +699,17 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 			}
 
 			// Set replicas
+			// if the configuration use only one replica we increment
+			if *serverSet.JbpmCluster {
+				if serverSet.Replicas == nil {
+					serverSet.Replicas = new(int32)
+					if *serverSet.Replicas < 2 {
+						// in case of wrong input we set almost two
+						*serverSet.Replicas = 2
+					}
+				}
+				template.JbpmCluster = serverSet.JbpmCluster
+			}
 			if serverSet.Replicas == nil {
 				serverSet.Replicas = serverReplicas
 			}
@@ -735,6 +750,9 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 			if serverSet.Jvm != nil {
 				instanceTemplate.Jvm = *serverSet.Jvm.DeepCopy()
 			}
+
+			// JBPM configuration
+			instanceTemplate.JbpmCluster = serverSet.JbpmCluster
 
 			servers = append(servers, *instanceTemplate)
 		}
