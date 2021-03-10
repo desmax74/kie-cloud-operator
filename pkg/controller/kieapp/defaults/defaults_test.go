@@ -5434,3 +5434,77 @@ func TestClusterLabelsRHPAMDashbuilderDefaultEnvironment(t *testing.T) {
 	assert.True(t, dashKubeLabelNSPresent)
 	assert.True(t, dashKubeLabelPresent)
 }
+
+func TestRhdmProdImmutableEnvironmentWithJbpmClusterEnabled(t *testing.T) {
+	cr := &api.KieApp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: api.KieAppSpec{
+			Environment: api.RhdmProductionImmutable,
+			Objects: api.KieAppObjects{
+				Servers: []api.KieServerSet{
+					{
+						JbpmCluster: true,
+					},
+				},
+			},
+		},
+	}
+
+	env, err := GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(2), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
+	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
+
+	cr.Spec.Objects.Servers[0].Replicas = Pint32(1)
+	env, err = GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas, "a user's setting in spec should not be overriden")
+}
+
+func TestRhdmProdImmutableEnvironmentWithJbpmClusterDisabled(t *testing.T) {
+	cr := &api.KieApp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: api.KieAppSpec{
+			Environment: api.RhdmProductionImmutable,
+			Objects: api.KieAppObjects{
+				Servers: []api.KieServerSet{
+					{
+						JbpmCluster: false,
+					},
+				},
+			},
+		},
+	}
+
+	env, err := GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.False(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
+	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
+}
+
+func TestRhdmProdImmutableEnvironmentWithoutJbpmCluster(t *testing.T) {
+	cr := &api.KieApp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: api.KieAppSpec{
+			Environment: api.RhdmProductionImmutable,
+			Objects: api.KieAppObjects{
+				Servers: []api.KieServerSet{},
+			},
+		},
+	}
+
+	env, err := GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.False(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
+	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
+}

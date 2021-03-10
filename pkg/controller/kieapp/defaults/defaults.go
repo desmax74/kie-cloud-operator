@@ -671,6 +671,7 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 				Build:            getBuildConfig(product, cr, serverSet),
 				KeystoreSecret:   serverSet.KeystoreSecret,
 				StorageClassName: serverSet.StorageClassName,
+				JbpmCluster:      serverSet.JbpmCluster,
 			}
 
 			if cr.Status.Applied.Objects.Console == nil || cr.Status.Applied.Environment == api.RhdmProductionImmutable {
@@ -695,6 +696,11 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 			}
 
 			// Set replicas
+			jbpmReplicas := int32(2)
+			if serverSet.JbpmCluster && *serverReplicas < jbpmReplicas {
+				// in case of wrong input we set at least two
+				serverReplicas = &jbpmReplicas
+			}
 			if serverSet.Replicas == nil {
 				serverSet.Replicas = serverReplicas
 			}
