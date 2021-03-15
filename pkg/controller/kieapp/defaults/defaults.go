@@ -141,6 +141,7 @@ func GetEnvironment(cr *api.KieApp, service kubernetes.PlatformService) (api.Env
 	if err != nil {
 		return api.Environment{}, err
 	}
+	overrideKafkaTopicsEnv(cr, &mergedEnv)
 	setProductLabels(cr, &mergedEnv)
 	return mergedEnv, nil
 }
@@ -762,6 +763,14 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 				template.Jms = *jmsConfig
 			}
 
+			kafkaConfig, err := getKafkaConfig(serverSet.Kafka)
+			if err != nil {
+				return servers, err
+			}
+			if kafkaConfig != nil {
+				template.Kafka = *kafkaConfig
+			}
+
 			if template.KeystoreSecret == "" {
 				template.KeystoreSecret = fmt.Sprintf(constants.KeystoreSecret, template.KieName)
 			}
@@ -1044,6 +1053,31 @@ func getJmsConfig(environment api.EnvironmentType, jms *api.KieAppJmsObject) (*a
 		return jms, err
 	}
 	return jms, nil
+}
+
+func getKafkaConfig(kafka *api.KafkaExtObject) (*api.KafkaExtObject, error) {
+	if kafka == nil || !kafka.ExtEnabled {
+		return nil, nil
+	}
+
+	//if something is missing we set mandatory defaults
+	if kafka.MaxBlockMs == nil {
+		kafka.MaxBlockMs = Pint32(2000)
+	}
+	if len(kafka.BootstrapServers) == 0 {
+		kafka.BootstrapServers = "localhost:9092"
+	}
+	if len(kafka.GroupID) == 0 {
+		kafka.GroupID = "jbpm-consumer"
+	}
+	if kafka.Acks == nil {
+		kafka.Acks = Pint(1)
+	}
+	if kafka.AutocreateTopics == nil {
+		kafka.AutocreateTopics = Pbool(true)
+	}
+
+	return kafka, nil
 }
 
 func getDefaultQueue(append bool, defaultJmsQueue string, jmsQueue string) string {
@@ -1576,6 +1610,32 @@ func mergeDashbuilder(service kubernetes.PlatformService, cr *api.KieApp, env ap
 	}
 
 	return env, nil
+}
+
+func overrideKafkaTopicsEnv(cr *api.KieApp, env *api.Environment) {
+	var topics []string
+	if cr.Status.Applied.Objects.Servers != nil {
+		for index, server := range cr.Status.Applied.Objects.Servers {
+			if server.Kafka != nil {
+				for _, mapping := range server.Kafka.Topics {
+					topics = append(topics, mapping)
+				}
+				//We set a comma as a separator between topics' mappings
+				setKafkaTopics(&env.Servers[index], strings.Join(topics, ","))
+			}
+		}
+	}
+}
+
+func setKafkaTopics(object *api.CustomObject, value string) {
+	for index := range object.DeploymentConfigs {
+		for indexEnv, env := range object.DeploymentConfigs[index].Spec.Template.Spec.Containers[index].Env {
+			if env.Name == constants.KafkaTopicsEnv {
+				object.DeploymentConfigs[index].Spec.Template.Spec.Containers[index].Env[indexEnv] = corev1.EnvVar{Name: constants.KafkaTopicsEnv, Value: value}
+				return
+			}
+		}
+	}
 }
 
 func loadProcessMigrationFromFile(filename string, service kubernetes.PlatformService, cr *api.KieApp, envTemplate api.EnvTemplate) (api.Environment, error) {

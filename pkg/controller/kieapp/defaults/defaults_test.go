@@ -5673,3 +5673,157 @@ func TestRhdmProdImmutableEnvironmentWithoutJbpmCluster(t *testing.T) {
 	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
 	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
 }
+
+func TestRhdmEnvironmentWithKafkaExt(t *testing.T) {
+	cr := &api.KieApp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: api.KieAppSpec{
+			Environment: api.RhdmProductionImmutable,
+			Objects: api.KieAppObjects{
+				Servers: []api.KieServerSet{
+					{
+						Kafka: createKafkaExtObject(),
+					},
+				},
+			},
+		},
+	}
+
+	env, err := GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.NotNil(t, env)
+	assert.True(t, len(cr.Spec.Objects.Servers[0].Kafka.Topics) == 2)
+	envs := env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0].Env
+
+	for _, env := range envs {
+
+		switch e := env.Name; e {
+		case "KIE_SERVER_KAFKA_EXT_ENABLED":
+			assert.True(t, env.Value == "true")
+
+		case "KIE_SERVER_KAFKA_EXT_GROUP_ID":
+			assert.True(t, env.Value == "my-kafka-group")
+
+		case "KIE_SERVER_KAFKA_EXT_ACKS":
+			assert.True(t, env.Value == "2")
+
+		case "KIE_SERVER_KAFKA_EXT_AUTOCREATE_TOPICS":
+			assert.True(t, env.Value == "true")
+
+		case "KIE_SERVER_KAFKA_EXT_MAX_BLOCK_MS":
+			assert.True(t, env.Value == "2100")
+
+		case "KIE_SERVER_KAFKA_EXT_CLIENT_ID":
+			assert.True(t, env.Value == "C1234567")
+
+		case "KIE_SERVER_KAFKA_EXT_SERVERS":
+			assert.True(t, env.Value == "localhost:9092")
+
+		case "KIE_SERVER_KAFKA_EXT_TOPICS":
+			assert.True(t, env.Value == "events=my-topics,errors=my-errs")
+		}
+	}
+	assert.Equal(t, "true", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_ENABLED"))
+	assert.Equal(t, "my-kafka-group", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_GROUP_ID"))
+	assert.Equal(t, "2", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_ACKS"))
+	assert.Equal(t, "true", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_AUTOCREATE_TOPICS"))
+	assert.Equal(t, "2100", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_MAX_BLOCK_MS"))
+	assert.Equal(t, "C1234567", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_CLIENT_ID"))
+	assert.Equal(t, "localhost:9092", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_SERVERS"))
+	assert.Equal(t, "events=my-topics,errors=my-errs", getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_TOPICS"))
+}
+
+func createKafkaExtObject() *api.KafkaExtObject {
+	kafkaExtObject := api.KafkaExtObject{
+		MaxBlockMs:       Pint32(2100),
+		AutocreateTopics: Pbool(true),
+		BootstrapServers: "localhost:9092",
+		GroupID:          "my-kafka-group",
+		Acks:             Pint(2),
+		Topics:           []string{"events=my-topics", "errors=my-errs"},
+		ExtEnabled:       true,
+		ClientID:         "C1234567",
+	}
+	return &kafkaExtObject
+}
+
+func TestRhdmEnvironmentWithKafkaExtDefault(t *testing.T) {
+	cr := &api.KieApp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: api.KieAppSpec{
+			Environment: api.RhdmProductionImmutable,
+			Objects: api.KieAppObjects{
+				Servers: []api.KieServerSet{
+					{
+						Kafka: &api.KafkaExtObject{},
+					},
+				},
+			},
+		},
+	}
+
+	env, err := GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.NotNil(t, env)
+	envs := env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0].Env
+
+	extEnabled := false
+	for _, env := range envs {
+		if strings.HasPrefix(env.Value, "KIE_SERVER_KAFKA") {
+			extEnabled = true
+		}
+	}
+	assert.False(t, extEnabled)
+
+	kafkaSpec := cr.Spec.Objects.Servers[0].Kafka
+	assert.False(t, kafkaSpec.ExtEnabled)
+	assert.True(t, kafkaSpec.ClientID == "")
+	assert.Nil(t, kafkaSpec.AutocreateTopics)
+	assert.Nil(t, kafkaSpec.Topics)
+	assert.True(t, kafkaSpec.BootstrapServers == "")
+	assert.True(t, kafkaSpec.GroupID == "")
+	assert.True(t, kafkaSpec.Acks == nil)
+	assert.True(t, kafkaSpec.MaxBlockMs == nil)
+
+	kafkaStatus := cr.Status.Applied.Objects.Servers[0].Kafka
+	assert.False(t, kafkaStatus.ExtEnabled)
+	assert.True(t, kafkaStatus.ClientID == "")
+	assert.Nil(t, kafkaStatus.AutocreateTopics)
+	assert.Nil(t, kafkaStatus.Topics)
+	assert.True(t, kafkaStatus.BootstrapServers == "")
+	assert.True(t, kafkaStatus.GroupID == "")
+	assert.True(t, kafkaStatus.Acks == nil)
+	assert.True(t, kafkaStatus.MaxBlockMs == nil)
+}
+
+func TestRhdmEnvironmentWithoutKafkaExt(t *testing.T) {
+	cr := &api.KieApp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: api.KieAppSpec{
+			Environment: api.RhdmProductionImmutable,
+			Objects: api.KieAppObjects{
+				Servers: []api.KieServerSet{},
+			},
+		},
+	}
+
+	env, err := GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting environment")
+	assert.NotNil(t, env)
+	envs := env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0].Env
+	extEnabled := false
+	for _, env := range envs {
+		if strings.HasPrefix(env.Name, "KIE_SERVER_KAFKA") {
+			extEnabled, _ = strconv.ParseBool(env.Value)
+		}
+	}
+	assert.False(t, extEnabled)
+	assert.True(t, len(cr.Spec.Objects.Servers) == 0)
+	assert.Nil(t, cr.Status.Applied.Objects.Servers[0].Kafka)
+}
