@@ -646,10 +646,10 @@ func serverSortBlanks(serverSets []api.KieServerSet) []api.KieServerSet {
 // or a specific one.
 func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 	var servers []api.ServerTemplate
-	serverReplicas := Pint32(1)
+	serverReplicas := int32(1)
 	envConstants, hasEnv := constants.EnvironmentConstants[cr.Status.Applied.Environment]
 	if hasEnv {
-		serverReplicas = &envConstants.Replica.Server.Replicas
+		serverReplicas = envConstants.Replica.Server.Replicas
 	}
 	product := GetProduct(cr.Status.Applied.Environment)
 	usedNames := map[string]bool{}
@@ -696,13 +696,12 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 			}
 
 			// Set replicas
-			jbpmReplicas := int32(2)
-			if serverSet.JbpmCluster && *serverReplicas < jbpmReplicas {
-				// in case of wrong input we set at least two
-				serverReplicas = &jbpmReplicas
-			}
 			if serverSet.Replicas == nil {
-				serverSet.Replicas = serverReplicas
+				serverSet.Replicas = &serverReplicas
+			}
+			// If JbpmCluster enabled and replicas set to 1, increase replicas to 2.
+			if serverSet.JbpmCluster && *serverSet.Replicas == int32(1) {
+				serverSet.Replicas = Pint32(2)
 			}
 			template.Replicas = *serverSet.Replicas
 

@@ -5458,11 +5458,23 @@ func TestRhdmProdImmutableEnvironmentWithJbpmClusterEnabled(t *testing.T) {
 	assert.Equal(t, int32(2), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
 	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
 
+	cr.Spec.Objects.Servers[0].Replicas = Pint32(0)
+	env, err = GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(0), env.Servers[0].DeploymentConfigs[0].Spec.Replicas, "a replica setting of zero in spec should not be overriden")
+
 	cr.Spec.Objects.Servers[0].Replicas = Pint32(1)
 	env, err = GetEnvironment(cr, test.MockService())
 	assert.Nil(t, err, "Error getting prod environment")
 	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
-	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas, "a user's setting in spec should not be overriden")
+	assert.Equal(t, int32(2), env.Servers[0].DeploymentConfigs[0].Spec.Replicas, "a user's setting in spec should only be overridden if set to 1")
+
+	cr.Spec.Objects.Servers[0].Replicas = Pint32(3)
+	env, err = GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(3), env.Servers[0].DeploymentConfigs[0].Spec.Replicas, "a user's setting in spec should only be overridden if set to 1")
 }
 
 func TestRhdmProdImmutableEnvironmentWithJbpmClusterDisabled(t *testing.T) {
