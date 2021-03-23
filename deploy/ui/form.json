@@ -855,7 +855,7 @@
                       "originalJsonPath": "$.spec.objects.servers[*].jbpmCluster",
                       "type": "checkbox",
                       "checked": "true",
-                      "description": "Enable the clustering between kieserver, it could increase the number of kieservers"
+                      "description": "Enable the KIE Server Jbpm clustering for processes fail-over, it could increase the number of kieservers"
                     }
                   ]
                 },
