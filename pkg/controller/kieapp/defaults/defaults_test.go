@@ -5445,7 +5445,7 @@ func TestRhdmProdImmutableEnvironmentWithJbpmClusterEnabled(t *testing.T) {
 			Objects: api.KieAppObjects{
 				Servers: []api.KieServerSet{
 					{
-						JbpmCluster: Pbool(true),
+						JbpmCluster: true,
 					},
 				},
 			},
@@ -5454,8 +5454,15 @@ func TestRhdmProdImmutableEnvironmentWithJbpmClusterEnabled(t *testing.T) {
 
 	env, err := GetEnvironment(cr, test.MockService())
 	assert.Nil(t, err, "Error getting prod environment")
-	assert.True(t, env.Servers[0].DeploymentConfigs[0].Spec.Replicas == 2)
+	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(2), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
 	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
+
+	cr.Spec.Objects.Servers[0].Replicas = Pint32(1)
+	env, err = GetEnvironment(cr, test.MockService())
+	assert.Nil(t, err, "Error getting prod environment")
+	assert.True(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas, "a user's setting in spec should not be overriden")
 }
 
 func TestRhdmProdImmutableEnvironmentWithJbpmClusterDisabled(t *testing.T) {
@@ -5468,7 +5475,7 @@ func TestRhdmProdImmutableEnvironmentWithJbpmClusterDisabled(t *testing.T) {
 			Objects: api.KieAppObjects{
 				Servers: []api.KieServerSet{
 					{
-						JbpmCluster: Pbool(false),
+						JbpmCluster: false,
 					},
 				},
 			},
@@ -5477,7 +5484,8 @@ func TestRhdmProdImmutableEnvironmentWithJbpmClusterDisabled(t *testing.T) {
 
 	env, err := GetEnvironment(cr, test.MockService())
 	assert.Nil(t, err, "Error getting prod environment")
-	assert.True(t, env.Servers[0].DeploymentConfigs[0].Spec.Replicas == 1)
+	assert.False(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
 	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
 }
 
@@ -5496,6 +5504,7 @@ func TestRhdmProdImmutableEnvironmentWithoutJbpmCluster(t *testing.T) {
 
 	env, err := GetEnvironment(cr, test.MockService())
 	assert.Nil(t, err, "Error getting prod environment")
-	assert.True(t, env.Servers[0].DeploymentConfigs[0].Spec.Replicas == 1)
+	assert.False(t, cr.Status.Applied.Objects.Servers[0].JbpmCluster)
+	assert.Equal(t, int32(1), env.Servers[0].DeploymentConfigs[0].Spec.Replicas)
 	assert.Nil(t, cr.Status.Applied.Objects.Console, "Console should be nil")
 }

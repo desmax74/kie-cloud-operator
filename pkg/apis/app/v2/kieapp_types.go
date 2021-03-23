@@ -130,7 +130,7 @@ type KieServerSet struct {
 	Jms          *KieAppJmsObject `json:"jms,omitempty"`
 	Jvm          *JvmObject       `json:"jvm,omitempty"`
 	// JbpmCluster Enable the KIE Server Jbpm clustering for processes fail-over, it could increase the number of kieservers
-	JbpmCluster *bool `json:"jbpmCluster,omitempty"`
+	JbpmCluster bool `json:"jbpmCluster,omitempty"`
 }
 
 // ConsoleObject configuration of the RHPAM workbench
@@ -663,7 +663,7 @@ type ServerTemplate struct {
 	Jvm              JvmObject         `json:"jvm,omitempty"`
 	StorageClassName string            `json:"storageClassName,omitempty"`
 	// JbpmCluster Enable the KIE Server Jbpm clustering for processes fail-over, it could increase the number of kieservers
-	JbpmCluster *bool `json:"jbpmCluster,omitempty"`
+	JbpmCluster bool `json:"jbpmCluster,omitempty"`
 }
 
 // DashbuilderTemplate contains all the variables used in the yaml templates

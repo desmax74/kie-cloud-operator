@@ -659,9 +659,6 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 		if serverSet.Deployments == nil {
 			serverSet.Deployments = Pint(constants.DefaultKieDeployments)
 		}
-		if serverSet.JbpmCluster == nil {
-			serverSet.JbpmCluster = Pbool(false)
-		}
 		for i := 0; i < *serverSet.Deployments; i++ {
 			name := getKieDeploymentName(cr.Status.Applied.CommonConfig.ApplicationName, serverSet.Name, 0, i)
 			if usedNames[name] {
@@ -699,17 +696,14 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 			}
 
 			// Set replicas
+			jbpmReplicas := int32(2)
+			if serverSet.JbpmCluster && *serverReplicas < jbpmReplicas {
+				// in case of wrong input we set at least two
+				serverReplicas = &jbpmReplicas
+			}
 			if serverSet.Replicas == nil {
 				serverSet.Replicas = serverReplicas
 			}
-			if *serverSet.JbpmCluster {
-				if *serverSet.Replicas < 2 {
-					// in case of wrong input we set almost two
-					*serverSet.Replicas = 2
-				}
-				template.JbpmCluster = serverSet.JbpmCluster
-			}
-
 			template.Replicas = *serverSet.Replicas
 
 			// if, SmartRouter object is nil, ignore it
