@@ -699,20 +699,17 @@ func getServersConfig(cr *api.KieApp) ([]api.ServerTemplate, error) {
 			}
 
 			// Set replicas
-			// if the configuration use only one replica we increment
-			if *serverSet.JbpmCluster {
-				if serverSet.Replicas == nil {
-					serverSet.Replicas = new(int32)
-					if *serverSet.Replicas < 2 {
-						// in case of wrong input we set almost two
-						*serverSet.Replicas = 2
-					}
-				}
-				template.JbpmCluster = serverSet.JbpmCluster
-			}
 			if serverSet.Replicas == nil {
 				serverSet.Replicas = serverReplicas
 			}
+			if *serverSet.JbpmCluster {
+				if *serverSet.Replicas < 2 {
+					// in case of wrong input we set almost two
+					*serverSet.Replicas = 2
+				}
+				template.JbpmCluster = serverSet.JbpmCluster
+			}
+
 			template.Replicas = *serverSet.Replicas
 
 			// if, SmartRouter object is nil, ignore it

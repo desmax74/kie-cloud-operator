@@ -129,7 +129,8 @@ type KieServerSet struct {
 	Database     *DatabaseObject  `json:"database,omitempty"`
 	Jms          *KieAppJmsObject `json:"jms,omitempty"`
 	Jvm          *JvmObject       `json:"jvm,omitempty"`
-	JbpmCluster  *bool            `json:"jbpmCluster,omitempty"`
+	// JbpmCluster configuration for Kie Servers cluster
+	JbpmCluster *bool `json:"jbpmCluster,omitempty"`
 }
 
 // ConsoleObject configuration of the RHPAM workbench
@@ -661,7 +662,8 @@ type ServerTemplate struct {
 	SmartRouter      SmartRouterObject `json:"smartRouter,omitempty"`
 	Jvm              JvmObject         `json:"jvm,omitempty"`
 	StorageClassName string            `json:"storageClassName,omitempty"`
-	JbpmCluster      *bool             `json:"jbpmCluster,omitempty"`
+	// JbpmCluster configuration for Kie Servers cluster
+	JbpmCluster *bool `json:"jbpmCluster,omitempty"`
 }
 
 // DashbuilderTemplate contains all the variables used in the yaml templates

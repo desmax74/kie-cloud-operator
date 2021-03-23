@@ -1684,6 +1684,7 @@ spec:
                             is optional for custom image.
                           type: string
                         jbpmCluster:
+                          description: JbpmCluster configuration for Kie Servers cluster
                           type: boolean
                         jms:
                           description: KieAppJmsObject messaging specification to
@@ -3823,6 +3824,8 @@ spec:
                                 is optional for custom image.
                               type: string
                             jbpmCluster:
+                              description: JbpmCluster configuration for Kie Servers
+                                cluster
                               type: boolean
                             jms:
                               description: KieAppJmsObject messaging specification
