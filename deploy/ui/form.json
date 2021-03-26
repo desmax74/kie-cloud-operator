@@ -1188,15 +1188,6 @@
                   "visible": true,
                   "fields": [
                     {
-                      "label": "Enable Kafka extension",
-                      "type": "checkbox",
-                      "checked": true,
-                      "required": false,
-                      "jsonPath": "$.spec.objects.servers[*].kafka.extEnabled",
-                      "originalJsonPath": "$.spec.objects.servers[*].kafka.extEnabled",
-                      "description": "Enable kafka extension"
-                    },
-                    {
                       "label": "Bootstrap Servers",
                       "type": "text",
                       "required": false,

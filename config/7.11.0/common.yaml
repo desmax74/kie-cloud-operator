@@ -908,9 +908,9 @@ servers:
                     #[[end]]
                     ## Jvm config END
                     ## AMQ Streams BEGIN
-                    #[[if .Kafka.ExtEnabled]]
+                    #[[if .Kafka]]
                     - name: KIE_SERVER_KAFKA_EXT_ENABLED
-                      value: "[[.Kafka.ExtEnabled]]"
+                      value: "true"
                       #[[if .Kafka.Topics]]
                     - name: KIE_SERVER_KAFKA_EXT_TOPICS
                       value: "[[.Kafka.Topics]]"

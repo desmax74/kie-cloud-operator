@@ -1897,10 +1897,6 @@ spec:
                               description: Identifier to pass to the server when making
                                 requests
                               type: string
-                            extEnabled:
-                              description: Setting with true enable the others KIE_KAFKA_EXT
-                                environments used by Kafka.
-                              type: boolean
                             groupID:
                               description: Group identifier the group this consumer
                                 belongs
@@ -4198,10 +4194,6 @@ spec:
                                   description: Identifier to pass to the server when
                                     making requests
                                   type: string
-                                extEnabled:
-                                  description: Setting with true enable the others
-                                    KIE_KAFKA_EXT environments used by Kafka.
-                                  type: boolean
                                 groupID:
                                   description: Group identifier the group this consumer
                                     belongs

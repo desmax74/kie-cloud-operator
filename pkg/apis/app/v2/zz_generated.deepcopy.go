@@ -1416,7 +1416,11 @@ func (in *ServerTemplate) DeepCopyInto(out *ServerTemplate) {
 	in.Jms.DeepCopyInto(&out.Jms)
 	in.SmartRouter.DeepCopyInto(&out.SmartRouter)
 	in.Jvm.DeepCopyInto(&out.Jvm)
-	in.Kafka.DeepCopyInto(&out.Kafka)
+	if in.Kafka != nil {
+		in, out := &in.Kafka, &out.Kafka
+		*out = new(KafkaExtObject)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

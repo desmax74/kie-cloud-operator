@@ -5743,7 +5743,6 @@ func createKafkaExtObject() *api.KafkaExtObject {
 		GroupID:          "my-kafka-group",
 		Acks:             Pint(2),
 		Topics:           []string{"events=my-topics", "errors=my-errs"},
-		ExtEnabled:       true,
 		ClientID:         "C1234567",
 	}
 	return &kafkaExtObject
@@ -5780,24 +5779,24 @@ func TestRhdmEnvironmentWithKafkaExtDefault(t *testing.T) {
 	assert.False(t, extEnabled)
 
 	kafkaSpec := cr.Spec.Objects.Servers[0].Kafka
-	assert.False(t, kafkaSpec.ExtEnabled)
-	assert.True(t, kafkaSpec.ClientID == "")
+	assert.NotNil(t, kafkaSpec)
+	assert.Empty(t, kafkaSpec.ClientID)
 	assert.Nil(t, kafkaSpec.AutocreateTopics)
 	assert.Nil(t, kafkaSpec.Topics)
-	assert.True(t, kafkaSpec.BootstrapServers == "")
-	assert.True(t, kafkaSpec.GroupID == "")
-	assert.True(t, kafkaSpec.Acks == nil)
-	assert.True(t, kafkaSpec.MaxBlockMs == nil)
+	assert.Empty(t, kafkaSpec.BootstrapServers)
+	assert.Empty(t, kafkaSpec.GroupID)
+	assert.Nil(t, kafkaSpec.Acks)
+	assert.Nil(t, kafkaSpec.MaxBlockMs)
 
 	kafkaStatus := cr.Status.Applied.Objects.Servers[0].Kafka
-	assert.False(t, kafkaStatus.ExtEnabled)
-	assert.True(t, kafkaStatus.ClientID == "")
-	assert.Nil(t, kafkaStatus.AutocreateTopics)
+	assert.NotNil(t, kafkaStatus)
+	assert.Empty(t, kafkaStatus.ClientID)
+	assert.NotNil(t, kafkaStatus.AutocreateTopics)
 	assert.Nil(t, kafkaStatus.Topics)
-	assert.True(t, kafkaStatus.BootstrapServers == "")
-	assert.True(t, kafkaStatus.GroupID == "")
-	assert.True(t, kafkaStatus.Acks == nil)
-	assert.True(t, kafkaStatus.MaxBlockMs == nil)
+	assert.Equal(t, "localhost:9092", kafkaStatus.BootstrapServers)
+	assert.Equal(t, "jbpm-consumer", kafkaStatus.GroupID)
+	assert.Equal(t, Pint(1), kafkaStatus.Acks)
+	assert.Equal(t, Pint32(2000), kafkaStatus.MaxBlockMs)
 }
 
 func TestRhdmEnvironmentWithoutKafkaExt(t *testing.T) {
@@ -5816,14 +5815,7 @@ func TestRhdmEnvironmentWithoutKafkaExt(t *testing.T) {
 	env, err := GetEnvironment(cr, test.MockService())
 	assert.Nil(t, err, "Error getting environment")
 	assert.NotNil(t, env)
-	envs := env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0].Env
-	extEnabled := false
-	for _, env := range envs {
-		if strings.HasPrefix(env.Name, "KIE_SERVER_KAFKA") {
-			extEnabled, _ = strconv.ParseBool(env.Value)
-		}
-	}
-	assert.False(t, extEnabled)
-	assert.True(t, len(cr.Spec.Objects.Servers) == 0)
+	assert.NotNil(t, cr.Status.Applied.Objects.Servers)
 	assert.Nil(t, cr.Status.Applied.Objects.Servers[0].Kafka)
+	assert.Empty(t, getEnvVariable(env.Servers[0].DeploymentConfigs[0].Spec.Template.Spec.Containers[0], "KIE_SERVER_KAFKA_EXT_ENABLED"))
 }
