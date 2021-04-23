@@ -676,6 +676,19 @@ spec:
                             format: password
                             type: string
                         type: object
+                      startupStrategy:
+                        description: StartupStrategy
+                        properties:
+                          controllerTemplateCacheTTL:
+                            description: Controller Template Cache TTL to use when
+                              the Openshift StartupStrategy is choosed and BC is deployed,
+                              default is 5000
+                            type: integer
+                          strategyName:
+                            description: StartupStrategy to use. Default is OpenShiftStartupStrategy,
+                              option is ControllerBasedStartupStrategy.
+                            type: string
+                        type: object
                       storageClassName:
                         description: The storageClassName to use
                         type: string
@@ -2011,6 +2024,19 @@ spec:
                               format: password
                               type: string
                           type: object
+                        startupStrategy:
+                          description: StartupStrategy
+                          properties:
+                            controllerTemplateCacheTTL:
+                              description: Controller Template Cache TTL to use when
+                                the Openshift StartupStrategy is choosed and BC is
+                                deployed, default is 5000
+                              type: integer
+                            strategyName:
+                              description: StartupStrategy to use. Default is OpenShiftStartupStrategy,
+                                option is ControllerBasedStartupStrategy.
+                              type: string
+                          type: object
                         storageClassName:
                           description: The storageClassName to use
                           type: string
@@ -2976,6 +3002,19 @@ spec:
                               secret:
                                 description: Client secret
                                 format: password
+                                type: string
+                            type: object
+                          startupStrategy:
+                            description: StartupStrategy
+                            properties:
+                              controllerTemplateCacheTTL:
+                                description: Controller Template Cache TTL to use
+                                  when the Openshift StartupStrategy is choosed and
+                                  BC is deployed, default is 5000
+                                type: integer
+                              strategyName:
+                                description: StartupStrategy to use. Default is OpenShiftStartupStrategy,
+                                  option is ControllerBasedStartupStrategy.
                                 type: string
                             type: object
                           storageClassName:
@@ -4351,6 +4390,19 @@ spec:
                                 secret:
                                   description: Client secret
                                   format: password
+                                  type: string
+                              type: object
+                            startupStrategy:
+                              description: StartupStrategy
+                              properties:
+                                controllerTemplateCacheTTL:
+                                  description: Controller Template Cache TTL to use
+                                    when the Openshift StartupStrategy is choosed
+                                    and BC is deployed, default is 5000
+                                  type: integer
+                                strategyName:
+                                  description: StartupStrategy to use. Default is
+                                    OpenShiftStartupStrategy, option is ControllerBasedStartupStrategy.
                                   type: string
                               type: object
                             storageClassName:
